@@ -11,7 +11,7 @@
       "RelativeMoniker": "D:0:0:{7F13D988-FDAC-4A6D-9E30-C532C3B710CF}|WindowsFormsApp1\\WindowsFormsApp1.csproj|solutionrelative:windowsformsapp1\\form2.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{7F13D988-FDAC-4A6D-9E30-C532C3B710CF}|WindowsFormsApp1\\WindowsFormsApp1.csproj|c:\\users\\usuario\\documents\\github\\invetario-scandent\\windowsformsapp1\\windowsformsapp1\\conexion.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{7F13D988-FDAC-4A6D-9E30-C532C3B710CF}|WindowsFormsApp1\\WindowsFormsApp1.csproj|C:\\Users\\USUARIO\\Documents\\GitHub\\invetario-ScanDent\\WindowsFormsApp1\\windowsformsapp1\\conexion.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{7F13D988-FDAC-4A6D-9E30-C532C3B710CF}|WindowsFormsApp1\\WindowsFormsApp1.csproj|solutionrelative:windowsformsapp1\\conexion.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
@@ -48,8 +48,7 @@
               "RelativeToolTip": "WindowsFormsApp1\\Conexion.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-02-06T19:17:09.203Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-02-06T19:17:09.203Z"
             },
             {
               "$type": "Document",
