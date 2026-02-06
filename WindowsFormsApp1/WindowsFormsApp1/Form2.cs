@@ -16,7 +16,7 @@ namespace WindowsFormsApp1
         private bool _loading = false;
         private byte[] fotoBytes = null;
 
-
+        
         private enum Mode { View, New, Edit }
         private Mode _mode = Mode.View;
 
