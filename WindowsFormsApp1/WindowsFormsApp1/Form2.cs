@@ -180,7 +180,7 @@ namespace WindowsFormsApp1
             }
         }
 
-     
+
         private string FormatDate(object value)
         {
             if (value == null || value == DBNull.Value) return "";
@@ -506,6 +506,7 @@ namespace WindowsFormsApp1
         {
             if (_loading) return;
             if (e.RowIndex < 0) return;
+           
 
             var row = dataGridView1.Rows[e.RowIndex];
 
@@ -536,6 +537,7 @@ namespace WindowsFormsApp1
             {
                 fotoBytes = (byte[])bin;
                 pb_foto.Image = BytesToImageSafe(fotoBytes);
+                MessageBox.Show("hola");
             }
             else
             {
@@ -546,5 +548,6 @@ namespace WindowsFormsApp1
             SetMode(Mode.View); // al seleccionar, solo lectura
             btn_actulizar.Enabled = true;
         }
+
     }
 }

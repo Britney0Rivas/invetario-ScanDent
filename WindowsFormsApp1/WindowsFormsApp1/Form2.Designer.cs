@@ -84,13 +84,13 @@
             this.panel3 = new System.Windows.Forms.Panel();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.panel4 = new System.Windows.Forms.Panel();
+            this.label12 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
             this.label11 = new System.Windows.Forms.Label();
-            this.label12 = new System.Windows.Forms.Label();
             this.label13 = new System.Windows.Forms.Label();
             this.label14 = new System.Windows.Forms.Label();
             this.txt_knuu = new System.Windows.Forms.TextBox();
@@ -245,10 +245,10 @@
             // txt_buscar
             // 
             this.txt_buscar.BackColor = System.Drawing.Color.White;
-            this.txt_buscar.Location = new System.Drawing.Point(18, 15);
+            this.txt_buscar.Location = new System.Drawing.Point(129, 29);
             this.txt_buscar.Margin = new System.Windows.Forms.Padding(4);
             this.txt_buscar.Name = "txt_buscar";
-            this.txt_buscar.Size = new System.Drawing.Size(265, 21);
+            this.txt_buscar.Size = new System.Drawing.Size(238, 21);
             this.txt_buscar.TabIndex = 12;
             // 
             // txt_nombre
@@ -359,7 +359,7 @@
             this.BtnNuevo.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.BtnNuevo.FlatAppearance.BorderSize = 0;
             this.BtnNuevo.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.BtnNuevo.Location = new System.Drawing.Point(9, 624);
+            this.BtnNuevo.Location = new System.Drawing.Point(14, 624);
             this.BtnNuevo.Margin = new System.Windows.Forms.Padding(0);
             this.BtnNuevo.Name = "BtnNuevo";
             this.BtnNuevo.RightToLeft = System.Windows.Forms.RightToLeft.No;
@@ -375,7 +375,7 @@
             this.btn_limpiar.FlatAppearance.BorderSize = 0;
             this.btn_limpiar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_limpiar.Font = new System.Drawing.Font("Century Gothic", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_limpiar.Location = new System.Drawing.Point(129, 627);
+            this.btn_limpiar.Location = new System.Drawing.Point(268, 627);
             this.btn_limpiar.Margin = new System.Windows.Forms.Padding(0);
             this.btn_limpiar.Name = "btn_limpiar";
             this.btn_limpiar.Size = new System.Drawing.Size(99, 60);
@@ -391,7 +391,7 @@
             this.btn_actulizar.FlatAppearance.BorderSize = 0;
             this.btn_actulizar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btn_actulizar.Font = new System.Drawing.Font("Century Gothic", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_actulizar.Location = new System.Drawing.Point(279, 626);
+            this.btn_actulizar.Location = new System.Drawing.Point(268, 627);
             this.btn_actulizar.Margin = new System.Windows.Forms.Padding(4);
             this.btn_actulizar.Name = "btn_actulizar";
             this.btn_actulizar.Size = new System.Drawing.Size(99, 63);
@@ -719,9 +719,9 @@
             // 
             this.pictureBox1.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("pictureBox1.BackgroundImage")));
             this.pictureBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.pictureBox1.Location = new System.Drawing.Point(281, 15);
+            this.pictureBox1.Location = new System.Drawing.Point(374, 29);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(41, 21);
+            this.pictureBox1.Size = new System.Drawing.Size(27, 21);
             this.pictureBox1.TabIndex = 47;
             this.pictureBox1.TabStop = false;
             // 
@@ -738,6 +738,18 @@
             this.panel4.Name = "panel4";
             this.panel4.Size = new System.Drawing.Size(396, 96);
             this.panel4.TabIndex = 43;
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.BackColor = System.Drawing.Color.Transparent;
+            this.label12.Font = new System.Drawing.Font("Century Gothic", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label12.Location = new System.Drawing.Point(193, 16);
+            this.label12.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(91, 16);
+            this.label12.TabIndex = 37;
+            this.label12.Text = "Proveedor P.:";
             // 
             // label5
             // 
@@ -803,25 +815,13 @@
             // 
             this.label11.AutoSize = true;
             this.label11.BackColor = System.Drawing.Color.Transparent;
-            this.label11.Font = new System.Drawing.Font("Century Gothic", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label11.Font = new System.Drawing.Font("Century Gothic", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label11.Location = new System.Drawing.Point(198, 239);
             this.label11.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(61, 16);
+            this.label11.Size = new System.Drawing.Size(65, 16);
             this.label11.TabIndex = 33;
             this.label11.Text = "Telefono:";
-            // 
-            // label12
-            // 
-            this.label12.AutoSize = true;
-            this.label12.BackColor = System.Drawing.Color.Transparent;
-            this.label12.Font = new System.Drawing.Font("Century Gothic", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label12.Location = new System.Drawing.Point(193, 16);
-            this.label12.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
-            this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(85, 16);
-            this.label12.TabIndex = 37;
-            this.label12.Text = "Proveedor P.:";
             // 
             // label13
             // 
