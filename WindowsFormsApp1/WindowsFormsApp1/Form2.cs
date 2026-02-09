@@ -1,11 +1,11 @@
 ﻿using Microsoft.Data.SqlClient;
 using System;
 using System.Data;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-using System.Drawing;
 
 namespace WindowsFormsApp1
 {
@@ -16,7 +16,6 @@ namespace WindowsFormsApp1
         private bool _loading = false;
         private byte[] fotoBytes = null;
 
-
         private enum Mode { View, New, Edit }
         private Mode _mode = Mode.View;
 
@@ -24,19 +23,25 @@ namespace WindowsFormsApp1
         {
             InitializeComponent();
 
+            // Enganches seguros (sin duplicar)
             this.Load += Form2_Load;
 
-            // ✅ Buscar
             txt_buscar.TextChanged += (s, e) => LoadGrid(txt_buscar.Text.Trim());
 
-            // ✅ Selección del grid
-            dataGridView1.SelectionChanged += DataGridView1_SelectionChanged;
+            dataGridView1.CellClick += dataGridView1_CellContentClick;
 
-            // ✅ Botones
+            BtnNuevo.Click += BtnNuevo_Click;
             btn_guardar.Click += BtnGuardar_Click;
-            btn_modificar.Click += BtnModificar_Click;
 
-            HookNuevoButton();
+            // Botón "Modificar" -> solo habilita edición
+            btn_actulizar.Click += BtnEditar_Click;
+
+            // Botón "Actualizar" -> hace UPDATE real
+            btn_actulizar.Click += BtnActualizar_Click;
+
+            btn_limpiar.Click += (s, e) => ClearInputs();
+
+            pb_foto.Click += PbFoto_Click;
         }
 
         private void Form2_Load(object sender, EventArgs e)
@@ -46,82 +51,43 @@ namespace WindowsFormsApp1
         }
 
         /* =========================
-           Enganchar botón "Nuevo"
-        ========================= */
-        private void HookNuevoButton()
-        {
-            // 1) Por Name recomendado
-            var btn = FindControlByName<System.Windows.Forms.Button>(this, "btn_nuevo");
-
-            // 2) Si no existe, lo buscamos por Text (Nuevo)
-            if (btn == null)
-            {
-                btn = FindAllControls<System.Windows.Forms.Button>(this)
-                    .FirstOrDefault(b => string.Equals(b.Text?.Trim(), "Nuevo", StringComparison.OrdinalIgnoreCase));
-            }
-
-            if (btn != null)
-            {
-                btn.Click += BtnNuevo_Click; // ✅ handler claro
-            }
-        }
-
-        private static T FindControlByName<T>(Control root, string name) where T : Control
-        {
-            foreach (Control c in root.Controls)
-            {
-                if (c is T t && string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase))
-                    return t;
-
-                var child = FindControlByName<T>(c, name);
-                if (child != null) return child;
-            }
-            return null;
-        }
-
-        private static System.Collections.Generic.IEnumerable<T> FindAllControls<T>(Control root) where T : Control
-        {
-            foreach (Control c in root.Controls)
-            {
-                if (c is T t) yield return t;
-                foreach (var child in FindAllControls<T>(c)) yield return child;
-            }
-        }
-
-        /* =========================
-           Estado UI
+           MODOS UI
         ========================= */
         private void SetMode(Mode mode)
         {
             _mode = mode;
 
-            bool enableInputs = (mode == Mode.New || mode == Mode.Edit);
-            SetInputsEnabled(enableInputs);
+            bool edit = (mode == Mode.New || mode == Mode.Edit);
 
-            // ID siempre bloqueado (PK)
             txt_id.Enabled = false;
 
-            // Guardar solo en modo New
+            txt_nom.Enabled = edit;
+            txt_categ.Enabled = edit;
+            txt_ubi.Enabled = edit;
+
+            txt_cant.Enabled = edit;
+            txt_prec.Enabled = edit;
+
+            txt_prov_prod.Enabled = edit;
+            txt_Protel.Enabled = edit;
+            txt_prov_dir.Enabled = edit;
+            txt_prov_prod.Enabled = edit;
+
+            txt_feing.Enabled = edit;
+            txt_fechaegre.Enabled = edit;
+
+            txt_est.Enabled = edit;
+            txt_resp.Enabled = edit;
+
+            pb_foto.Enabled = edit;
+
             btn_guardar.Enabled = (mode == Mode.New);
+            btn_actulizar.Enabled = (mode == Mode.Edit);
 
-            // Modificar solo en modo Edit
-            btn_modificar.Enabled = (mode == Mode.Edit);
-        }
+            // Modificar siempre disponible si hay selección
+            btn_actulizar.Enabled = (mode != Mode.New);
 
-        private void SetInputsEnabled(bool enabled)
-        {
-            // OJO: dejo txt_id bloqueado aparte
-            txt_nom.Enabled = enabled;   // nombre_producto
-            txt_categ.Enabled = enabled;   // categoria
-            txt_descrip.Enabled = enabled;  // descripcion
-            txt_cant.Enabled = enabled;   // cantidad
-            txt_prec.Enabled = enabled;   // precio
-            txt_ubi.Enabled = enabled;   // ubicacion
-            txt_prove.Enabled = enabled;  // proveedor
-            txt_feing.Enabled = enabled;   // fecha_ingreso
-            txt_est.Enabled = enabled;   // estado
-            txt_resp.Enabled = enabled;   // responsable
-
+            BtnNuevo.Enabled = (mode != Mode.New);
         }
 
         private void ClearInputs()
@@ -129,44 +95,30 @@ namespace WindowsFormsApp1
             txt_id.Clear();
             txt_nom.Clear();
             txt_categ.Clear();
-            txt_descrip.Clear();
+            txt_ubi.Clear();
+
             txt_cant.Clear();
             txt_prec.Clear();
-            txt_ubi.Clear();
-            txt_prove.Clear();
+
+            txt_prov_prod.Clear();
+            txt_Protel.Clear();
+            txt_prov_dir.Clear();
+            txt_prov_prod.Clear();
+
             txt_feing.Clear();
+            txt_fechaegre.Clear();
+
             txt_est.Clear();
             txt_resp.Clear();
+
+            txt_prov_dir.Clear();
+
+            pb_foto.Image = null;
+            fotoBytes = null;
         }
 
         /* =========================
-           NUEVO
-        ========================= */
-        private void BtnNuevo_Click(object sender, EventArgs e)
-        {
-            ClearInputs();
-            SetMode(Mode.New);
-
-            btn_guardar.Visible = true;     // 👈 IMPORTANTE
-            btn_guardar.Enabled = true;
-
-            btn_modificar.Visible = true;   // opcional
-            btn_modificar.Enabled = false;
-
-            // Si tu botón se llama btn_nuevo (no "BtnNuevo")
-            BtnNuevo.Enabled = false;      // 👈 ajusta al nombre real
-
-            btn_guardar.BringToFront();     // 👈 por si estaba tapado
-            txt_nom.Focus();
-
-            btn_CargarFoto.Enabled = true;
-            btn_CargarFoto.Visible = true;
-
-        }
-
-
-        /* =========================
-           GRID: cargar / buscar
+           GRID
         ========================= */
         private void LoadGrid(string search)
         {
@@ -180,15 +132,20 @@ namespace WindowsFormsApp1
                         id_identificador,
                         nombre_producto,
                         categoria,
+                        ubicacion,
                         descripcion,
                         cantidad,
                         precio,
-                        ubicacion,
                         proveedor,
                         fecha_ingreso,
                         estado,
                         responsable,
-                        foto_producto
+                        foto_producto,
+                        knu,
+                        fecha_egreso,
+                        proveedor_telefono,
+                        proveedor_direccion,
+                        proveedor_producto
                     FROM {TABLE}
                     WHERE (@q = '' OR
                            nombre_producto LIKE '%' + @q + '%' OR
@@ -211,12 +168,6 @@ namespace WindowsFormsApp1
                         dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
                     }
                 }
-
-                if (dataGridView1.Rows.Count == 0)
-                {
-                    SetMode(Mode.View);
-                    ClearInputs();
-                }
             }
             catch (Exception ex)
             {
@@ -229,29 +180,6 @@ namespace WindowsFormsApp1
             }
         }
 
-        private void DataGridView1_SelectionChanged(object sender, EventArgs e)
-        {
-            if (_loading) return;
-            if (dataGridView1.CurrentRow == null) return;
-            if (dataGridView1.CurrentRow.DataBoundItem == null) return;
-
-            var row = dataGridView1.CurrentRow;
-
-            txt_id.Text = row.Cells["id_identificador"].Value?.ToString() ?? "";
-            txt_nom.Text = row.Cells["nombre_producto"].Value?.ToString() ?? "";
-            txt_categ.Text = row.Cells["categoria"].Value?.ToString() ?? "";
-            txt_descrip.Text = row.Cells["descripcion"].Value?.ToString() ?? "";
-            txt_cant.Text = row.Cells["cantidad"].Value?.ToString() ?? "";
-            txt_prec.Text = row.Cells["precio"].Value?.ToString() ?? "";
-            txt_ubi.Text = row.Cells["ubicacion"].Value?.ToString() ?? "";
-            txt_prove.Text = row.Cells["proveedor"].Value?.ToString() ?? "";
-            txt_feing.Text = FormatDate(row.Cells["fecha_ingreso"].Value);
-            txt_est.Text = row.Cells["estado"].Value?.ToString() ?? "";
-            txt_resp.Text = row.Cells["responsable"].Value?.ToString() ?? "";
-            pb_foto.Text = row.Cells["foto_producto"].Value?.ToString() ?? "";
-
-            SetMode(Mode.Edit);
-        }
 
         private string FormatDate(object value)
         {
@@ -260,81 +188,140 @@ namespace WindowsFormsApp1
             return value.ToString();
         }
 
-        /* =========================
-           VALIDACIÓN OBLIGATORIA
-        ========================= */
-        private bool ValidateRequired(out string msg)
+        private Image BytesToImageSafe(byte[] bytes)
         {
-            msg = "";
-
-            if (string.IsNullOrWhiteSpace(txt_nom.Text)) return Fail("Falta Nombre del producto.", out msg);
-            if (string.IsNullOrWhiteSpace(txt_categ.Text)) return Fail("Falta Categoría.", out msg);
-            if (string.IsNullOrWhiteSpace(txt_descrip.Text)) return Fail("Falta Descripción.", out msg);
-            if (string.IsNullOrWhiteSpace(txt_cant.Text)) return Fail("Falta Cantidad.", out msg);
-            if (string.IsNullOrWhiteSpace(txt_prec.Text)) return Fail("Falta Precio.", out msg);
-            if (string.IsNullOrWhiteSpace(txt_ubi.Text)) return Fail("Falta ubicacion.", out msg);
-            if (string.IsNullOrWhiteSpace(txt_prove.Text)) return Fail("Falta Proveedor.", out msg);
-            if (string.IsNullOrWhiteSpace(txt_feing.Text)) return Fail("Falta Fecha de ingreso.", out msg);
-            if (string.IsNullOrWhiteSpace(txt_est.Text)) return Fail("Falta Estado.", out msg);
-            if (string.IsNullOrWhiteSpace(txt_resp.Text)) return Fail("Falta Responsable.", out msg);
-            if (pb_foto.Image == null) return Fail("Falta Imagen", out msg);
-
-
-
-            if (!int.TryParse(txt_cant.Text.Trim(), out int cant) || cant <= 0)
-                return Fail("Cantidad inválida (número > 0).", out msg);
-
-            if (!TryParseDecimal(txt_prec.Text.Trim(), out decimal precio) || precio <= 0)
-                return Fail("Precio inválido (número > 0).", out msg);
-
-            if (!DateTime.TryParse(txt_feing.Text.Trim(), out _))
-                return Fail("Fecha inválida. Usa yyyy-MM-dd (ej: 2026-02-03).", out msg);
-
-            return true;
-        }
-
-        private bool Fail(string text, out string msg)
-        {
-            msg = text;
-            return false;
+            try
+            {
+                if (bytes == null || bytes.Length == 0) return null;
+                using (var ms = new MemoryStream(bytes))
+                    return Image.FromStream(ms);
+            }
+            catch { return null; }
         }
 
         /* =========================
-           GUARDAR: INSERT + ID AUTO
+           BOTONES
         ========================= */
+
+        private void BtnNuevo_Click(object sender, EventArgs e)
+        {
+            ClearInputs();
+            SetMode(Mode.New);
+            txt_nom.Focus();
+        }
+
+        // “Modificar” = solo habilita edición
+        private void BtnEditar_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(txt_id.Text))
+            {
+                MessageBox.Show("⚠️ Selecciona un producto primero.", "ScanDent",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            SetMode(Mode.Edit);
+            txt_nom.Focus();
+        }
+
+        // “Actualizar” = UPDATE real
+        private void BtnActualizar_Click(object sender, EventArgs e)
+        {
+            if (_mode != Mode.Edit) return;
+
+            if (!int.TryParse(txt_id.Text.Trim(), out int id) || id <= 0)
+            {
+                MessageBox.Show("⚠️ ID inválido.", "ScanDent", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (!ValidateRequired(out string msg))
+            {
+                MessageBox.Show("⚠️ " + msg, "ScanDent", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string knu = (txt_prov_dir.Text ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(knu))
+                knu = GenerateKnu(txt_nom.Text, txt_categ.Text, txt_prov_prod.Text);
+
+            try
+            {
+                using (SqlConnection con = Db.GetConnection())
+                using (SqlCommand cmd = new SqlCommand($@"
+                    UPDATE {TABLE}
+                    SET
+                        nombre_producto      = @nombre,
+                        categoria            = @categoria,
+                        ubicacion            = @ubicacion,
+                        descripcion          = @descripcion,
+                        cantidad             = @cantidad,
+                        precio               = @precio,
+                        proveedor            = @proveedor,
+                        proveedor_telefono   = @prov_tel,
+                        proveedor_direccion  = @prov_dir,
+                        proveedor_producto   = @prov_prod,
+                        fecha_ingreso        = @feing,
+                        fecha_egreso         = @fegre,
+                        estado               = @estado,
+                        responsable          = @responsable,
+                        foto_producto        = @foto,
+                        knu                  = @knu
+                    WHERE id_identificador = @id;", con))
+                {
+                    FillParams(cmd, knu);
+                    cmd.Parameters.Add("@id", SqlDbType.Int).Value = id;
+
+                    con.Open();
+                    cmd.ExecuteNonQuery();
+                }
+
+                MessageBox.Show("✅ Producto actualizado.", "ScanDent",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                SetMode(Mode.View);
+                LoadGrid(txt_buscar.Text.Trim());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("💥 Error al actualizar: " + ex.Message, "ScanDent",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void BtnGuardar_Click(object sender, EventArgs e)
         {
             if (_mode != Mode.New) return;
 
             if (!ValidateRequired(out string msg))
             {
-                MessageBox.Show("⚠️ " + msg, "ScanDent",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("⚠️ " + msg, "ScanDent", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            if (!TryReadInputs(out var p, out string msg2))
-            {
-                MessageBox.Show("⚠️ " + msg2, "ScanDent",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+            string knu = (txt_prov_dir.Text ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(knu))
+                knu = GenerateKnu(txt_nom.Text, txt_categ.Text, txt_prov_prod.Text);
 
             try
             {
                 using (SqlConnection con = Db.GetConnection())
                 using (SqlCommand cmd = new SqlCommand($@"
                     INSERT INTO {TABLE}
-                    (nombre_producto, categoria, descripcion, cantidad, precio, ubicacion, proveedor, fecha_ingreso, estado, responsable, foto_producto)
+                    (nombre_producto, categoria, ubicacion, descripcion, cantidad, precio,
+                     proveedor, proveedor_telefono, proveedor_direccion, proveedor_producto,
+                     fecha_ingreso, fecha_egreso, estado, responsable, foto_producto, knu)
                     VALUES
-                    (@nombre, @categoria, @descripcion, @cantidad, @precio, @ubicacion, @proveedor, @fecha, @estado, @responsable @foto_producto);
+                    (@nombre, @categoria, @ubicacion, @descripcion, @cantidad, @precio,
+                     @proveedor, @prov_tel, @prov_dir, @prov_prod,
+                     @feing, @fegre, @estado, @responsable, @foto, @knu);
 
                     SELECT CAST(SCOPE_IDENTITY() AS INT);", con))
                 {
-                    FillParams(cmd, p);
+                    FillParams(cmd, knu);
 
                     con.Open();
-                    int newId = (int)cmd.ExecuteScalar(); // ✅ ID generado
+                    int newId = Convert.ToInt32(cmd.ExecuteScalar());
                     txt_id.Text = newId.ToString();
                 }
 
@@ -353,263 +340,99 @@ namespace WindowsFormsApp1
         }
 
         /* =========================
-           MODIFICAR: UPDATE
+           VALIDACIÓN + PARAMS
         ========================= */
-        private void BtnModificar_Click(object sender, EventArgs e)
+
+        private bool ValidateRequired(out string msg)
         {
-            if (_mode != Mode.Edit) return;
+            msg = "";
 
-            if (!int.TryParse(txt_id.Text.Trim(), out int id) || id <= 0)
-            {
-                MessageBox.Show("⚠️ Selecciona un producto válido.", "ScanDent",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+            if (string.IsNullOrWhiteSpace(txt_nom.Text)) return Fail("Falta Nombre.", out msg);
+            if (string.IsNullOrWhiteSpace(txt_categ.Text)) return Fail("Falta Categoría.", out msg);
+            if (string.IsNullOrWhiteSpace(txt_ubi.Text)) return Fail("Falta Ubicación.", out msg);
 
-            if (!ValidateRequired(out string msg))
-            {
-                MessageBox.Show("⚠️ " + msg, "ScanDent",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+            if (string.IsNullOrWhiteSpace(txt_cant.Text)) return Fail("Falta Cantidad.", out msg);
+            if (string.IsNullOrWhiteSpace(txt_prec.Text)) return Fail("Falta Precio.", out msg);
 
-            if (!TryReadInputs(out var p, out string msg2))
-            {
-                MessageBox.Show("⚠️ " + msg2, "ScanDent",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+            if (string.IsNullOrWhiteSpace(txt_prov_prod.Text)) return Fail("Falta Proveedor.", out msg);
+            if (string.IsNullOrWhiteSpace(txt_feing.Text)) return Fail("Falta Fecha ingreso.", out msg);
+            if (string.IsNullOrWhiteSpace(txt_est.Text)) return Fail("Falta Estado.", out msg);
+            if (string.IsNullOrWhiteSpace(txt_resp.Text)) return Fail("Falta Responsable.", out msg);
 
-            try
-            {
-                using (SqlConnection con = Db.GetConnection())
-                using (SqlCommand cmd = new SqlCommand($@"
-                    UPDATE {TABLE}
-                    SET
-                        nombre_producto = @nombre,
-                        categoria = @categoria,
-                        descripcion = @descripcion,
-                        cantidad = @cantidad,
-                        precio = @precio,
-                        ubicacion = @ubicacion,
-                        proveedor = @proveedor,
-                        fecha_ingreso = @fecha,
-                        estado = @estado,
-                        responsable = @responsable,
-                        pb_foto = @foto_producto
-                    WHERE id_identificador = @id;", con))
-                {
-                    FillParams(cmd, p);
-                    cmd.Parameters.Add("@id", SqlDbType.Int).Value = id;
+            if (!int.TryParse(txt_cant.Text.Trim(), out int cant) || cant <= 0)
+                return Fail("Cantidad inválida.", out msg);
 
-                    con.Open();
-                    int rows = cmd.ExecuteNonQuery();
+            if (!TryParseDecimal(txt_prec.Text.Trim(), out decimal precio) || precio <= 0)
+                return Fail("Precio inválido.", out msg);
 
-                    if (rows == 0)
-                    {
-                        MessageBox.Show("⚠️ No se encontró el producto.", "ScanDent",
-                            MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
-                }
+            if (!DateTime.TryParse(txt_feing.Text.Trim(), out _))
+                return Fail("Fecha ingreso inválida (yyyy-MM-dd).", out msg);
 
-                MessageBox.Show("✅ Producto modificado.", "ScanDent",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                SetMode(Mode.View);
-                LoadGrid(txt_buscar.Text.Trim());
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("💥 Error al modificar: " + ex.Message, "ScanDent",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        /* =========================
-           Inputs -> Modelo
-        ========================= */
-        private sealed class ProductInput
-        {
-            public string Nombre;
-            public string Categoria;
-            public string Descripcion;
-            public int Cantidad;
-            public decimal Precio;
-            public string ubicacion;
-            public string Proveedor;
-            public DateTime FechaIngreso;
-            public string Estado;
-            public string Responsable;
-            public string pb_foto;
-        }
-
-        private bool TryReadInputs(out ProductInput p, out string error)
-        {
-            p = new ProductInput();
-            error = "";
-
-            p.Nombre = txt_nom.Text.Trim();
-            p.Categoria = txt_categ.Text.Trim();
-            p.Descripcion = txt_descrip.Text.Trim();
-            p.ubicacion = txt_ubi.Text.Trim();
-            p.Proveedor = txt_prove.Text.Trim();
-            p.Estado = txt_est.Text.Trim();
-            p.Responsable = txt_resp.Text.Trim();
-            p.pb_foto = pb_foto.Text.Trim();
-
-            if (!int.TryParse(txt_cant.Text.Trim(), out int cant))
-            {
-                error = "Cantidad inválida.";
-                return false;
-            }
-            p.Cantidad = cant;
-
-            if (!TryParseDecimal(txt_prec.Text.Trim(), out decimal precio))
-            {
-                error = "Precio inválido.";
-                return false;
-            }
-            p.Precio = precio;
-
-            if (!DateTime.TryParse(txt_feing.Text.Trim(), out DateTime fin))
-            {
-                error = "Fecha inválida.";
-                return false;
-            }
-            p.FechaIngreso = fin.Date;
+            // foto opcional? (tú dijiste que sí la quieres obligatoria)
+            if (fotoBytes == null || fotoBytes.Length == 0)
+                return Fail("Falta foto (da click en la imagen).", out msg);
 
             return true;
         }
+
+        private bool Fail(string text, out string msg) { msg = text; return false; }
 
         private static bool TryParseDecimal(string s, out decimal value)
         {
             if (decimal.TryParse(s, NumberStyles.Number, CultureInfo.CurrentCulture, out value))
                 return true;
-
             return decimal.TryParse(s, NumberStyles.Number, CultureInfo.InvariantCulture, out value);
         }
 
-        private void FillParams(SqlCommand cmd, ProductInput p)
+        private void FillParams(SqlCommand cmd, string knu)
         {
-            cmd.Parameters.Add("@nombre", SqlDbType.VarChar, 100).Value = p.Nombre;
-            cmd.Parameters.Add("@categoria", SqlDbType.VarChar, 50).Value = p.Categoria;
-            cmd.Parameters.Add("@descripcion", SqlDbType.Text).Value = p.Descripcion;
-            cmd.Parameters.Add("@cantidad", SqlDbType.Int).Value = p.Cantidad;
+            cmd.Parameters.Add("@nombre", SqlDbType.NVarChar, 150).Value = txt_nom.Text.Trim();
+            cmd.Parameters.Add("@categoria", SqlDbType.NVarChar, 100).Value = txt_categ.Text.Trim();
+            cmd.Parameters.Add("@ubicacion", SqlDbType.NVarChar, 100).Value = txt_ubi.Text.Trim();
+            cmd.Parameters.Add("@proveedor_telefono", SqlDbType.NVarChar, -1).Value = txt_Protel.Text.Trim();
 
-            var parPrecio = cmd.Parameters.Add("@precio", SqlDbType.Decimal);
-            parPrecio.Value = p.Precio;
-            parPrecio.Precision = 10;
-            parPrecio.Scale = 2;
+            cmd.Parameters.Add("@cantidad", SqlDbType.Int).Value = int.Parse(txt_cant.Text.Trim());
 
-            cmd.Parameters.Add("@ubicacion", SqlDbType.VarChar, 100).Value = p.ubicacion;
-            cmd.Parameters.Add("@proveedor", SqlDbType.VarChar, 100).Value = p.Proveedor;
-            cmd.Parameters.Add("@fecha", SqlDbType.Date).Value = p.FechaIngreso;
-            cmd.Parameters.Add("@estado", SqlDbType.VarChar, 30).Value = p.Estado;
-            cmd.Parameters.Add("@responsable", SqlDbType.VarChar, 100).Value = p.Responsable;
-            cmd.Parameters.Add("@foto_producto", SqlDbType.VarBinary, fotoBytes.Length).Value = fotoBytes;
+            var pPrecio = cmd.Parameters.Add("@precio", SqlDbType.Decimal);
+            pPrecio.Precision = 10;
+            pPrecio.Scale = 2;
+            pPrecio.Value = decimal.Parse(txt_prec.Text.Trim(), CultureInfo.InvariantCulture);
 
+            cmd.Parameters.Add("@proveedor", SqlDbType.NVarChar, 100).Value = txt_prov_prod.Text.Trim();
+            cmd.Parameters.Add("@prov_tel", SqlDbType.NVarChar, 30).Value = (object)txt_Protel.Text.Trim() ?? DBNull.Value;
+            cmd.Parameters.Add("@prov_dir", SqlDbType.NVarChar, 200).Value = (object)txt_prov_dir.Text.Trim() ?? DBNull.Value;
+            cmd.Parameters.Add("@prov_prod", SqlDbType.NVarChar, 100).Value = (object)txt_prov_prod.Text.Trim() ?? DBNull.Value;
+
+            cmd.Parameters.Add("@feing", SqlDbType.Date).Value = DateTime.Parse(txt_feing.Text.Trim()).Date;
+
+            if (DateTime.TryParse(txt_fechaegre.Text.Trim(), out var feg))
+                cmd.Parameters.Add("@fegre", SqlDbType.Date).Value = feg.Date;
+            else
+                cmd.Parameters.Add("@fegre", SqlDbType.Date).Value = DBNull.Value;
+
+            cmd.Parameters.Add("@estado", SqlDbType.NVarChar, 50).Value = txt_est.Text.Trim();
+            cmd.Parameters.Add("@responsable", SqlDbType.NVarChar, 100).Value = txt_resp.Text.Trim();
+
+            cmd.Parameters.Add("@knu", SqlDbType.NVarChar, 30).Value = (object)knu ?? DBNull.Value;
+
+            if (fotoBytes == null || fotoBytes.Length == 0)
+                cmd.Parameters.Add("@foto_producto", SqlDbType.VarBinary).Value = DBNull.Value;
+            else
+                cmd.Parameters.Add("@foto_producto", SqlDbType.VarBinary, fotoBytes.Length).Value = fotoBytes;
         }
 
-
-
-
-
-        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        /* =========================
+           FOTO
+        ========================= */
+        private void PbFoto_Click(object sender, EventArgs e)
         {
-            if (_loading) return;
-            if (e.RowIndex < 0) return;
-
-            var row = dataGridView1.Rows[e.RowIndex];
-
-            txt_id.Text = row.Cells["id_identificador"].Value?.ToString() ?? "";
-            txt_nom.Text = row.Cells["nombre_producto"].Value?.ToString() ?? "";
-            txt_categ.Text = row.Cells["categoria"].Value?.ToString() ?? "";
-            txt_descrip.Text = row.Cells["descripcion"].Value?.ToString() ?? "";
-            txt_cant.Text = row.Cells["cantidad"].Value?.ToString() ?? "";
-            txt_prec.Text = row.Cells["precio"].Value?.ToString() ?? "";
-            txt_ubi.Text = row.Cells["ubicacion"].Value?.ToString() ?? "";
-            txt_prove.Text = row.Cells["proveedor"].Value?.ToString() ?? "";
-            txt_feing.Text = FormatDate(row.Cells["fecha_ingreso"].Value);
-            txt_est.Text = row.Cells["estado"].Value?.ToString() ?? "";
-            txt_resp.Text = row.Cells["responsable"].Value?.ToString() ?? "";
-            pb_foto.Text = row.Cells["foto_producto"].Value?.ToString() ?? "";
-
-
-            // 🔒 MODO SOLO LECTURA
-            _mode = Mode.View;
-            SetInputsEnabled(false);
-
-            // 🎛 Botones
-            btn_modificar.Enabled = true;
-            btn_modificar.Visible = true;
-
-            btn_guardar.Visible = false;
-            BtnNuevo.Visible = false;
-            btn_limpiar.Enabled = false;
-        }
-
-        private void btn_modificar_Click(object sender, EventArgs e)
-        {
-           btn_limpiar.Enabled = true;
-            btn_limpiar.Visible = true;
-            BtnNuevo.Enabled = false;
-
-
-        }
-
-        private void btn_limpiar_Click(object sender, EventArgs e)
-        {
-            ClearInputs();
-        }
-
-        private void btn_actulizar_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrWhiteSpace(txt_id.Text))
+            if (_mode == Mode.View)
             {
-                MessageBox.Show("Selecciona un producto primero.",
-                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Ponlo en Nuevo o Modificar para cambiar la foto 😉", "ScanDent",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            _mode = Mode.Edit;
-
-            // ✨ Habilitar edición
-            SetInputsEnabled(true);
-
-            // 🎛 Botones
-            btn_actulizar.Visible = true;
-            btn_guardar.Visible = false;
-
-            btn_modificar.Enabled = false;
-            btn_limpiar.Enabled = true;
-
-            txt_nom.Focus();
-
-            if (_mode != Mode.Edit) return;
-
-            // AQUÍ VA TU UPDATE SQL
-            // UpdateProducto();
-
-            MessageBox.Show("Producto actualizado correctamente.",
-                "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            // 🔒 Volver a solo lectura
-            _mode = Mode.View;
-            SetInputsEnabled(false);
-
-            btn_actulizar.Visible = false;
-            btn_modificar.Enabled = true;
-            btn_limpiar.Enabled = false;
-
-            // Refrescar grid si quieres
-            // CargarProductos();
-
-        }
-        
-
-        private void btn_CargarFoto_Click(object sender, EventArgs e)
-        {
             openFileDialog1.Filter = "Imágenes|*.jpg;*.jpeg;*.png";
             openFileDialog1.Title = "Selecciona una imagen";
 
@@ -617,17 +440,113 @@ namespace WindowsFormsApp1
             {
                 FileInfo fi = new FileInfo(openFileDialog1.FileName);
 
-                // Máx 3MB
                 if (fi.Length > 3 * 1024 * 1024)
                 {
-                    MessageBox.Show("La imagen no debe superar 3 MB",
-                        "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("La imagen no debe superar 3 MB", "Aviso",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
                 pb_foto.Image = Image.FromFile(openFileDialog1.FileName);
                 fotoBytes = File.ReadAllBytes(openFileDialog1.FileName);
             }
+        }
+
+        /* =========================
+           KNU
+        ========================= */
+        private string GenerateKnu(string nombre, string categoria, string proveedor)
+        {
+            string n = TakeLetters(nombre, 2);
+            string c = TakeLetters(categoria, 2);
+            string p = TakeLetters(proveedor, 1);
+
+            string baseKnu = (n + c + p).ToUpperInvariant();
+            if (baseKnu.Length < 5) baseKnu = baseKnu.PadRight(5, 'X');
+
+            // si ya existe, le agregamos 2 dígitos random
+            string knu = baseKnu;
+            int tries = 0;
+            var rnd = new Random();
+
+            while (KnuExists(knu) && tries < 30)
+            {
+                knu = baseKnu + rnd.Next(10, 99).ToString();
+                tries++;
+            }
+
+            return knu;
+        }
+
+        private string TakeLetters(string s, int count)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return new string('X', count);
+            var letters = new string(s.Where(char.IsLetter).ToArray());
+            if (letters.Length == 0) return new string('X', count);
+            letters = letters.ToUpperInvariant();
+            return letters.Length >= count ? letters.Substring(0, count) : letters.PadRight(count, 'X');
+        }
+
+        private bool KnuExists(string knu)
+        {
+            try
+            {
+                using (var con = Db.GetConnection())
+                using (var cmd = new SqlCommand($"SELECT COUNT(1) FROM {TABLE} WHERE knu = @k", con))
+                {
+                    cmd.Parameters.Add("@k", SqlDbType.NVarChar, 30).Value = knu;
+                    con.Open();
+                    return Convert.ToInt32(cmd.ExecuteScalar()) > 0;
+                }
+            }
+            catch { return false; }
+        }
+
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (_loading) return;
+            if (e.RowIndex < 0) return;
+           
+
+            var row = dataGridView1.Rows[e.RowIndex];
+
+            txt_id.Text = row.Cells["id_identificador"].Value?.ToString() ?? "";
+            txt_nom.Text = row.Cells["nombre_producto"].Value?.ToString() ?? "";
+            txt_categ.Text = row.Cells["categoria"].Value?.ToString() ?? "";
+            txt_ubi.Text = row.Cells["ubicacion"].Value?.ToString() ?? "";
+
+            txt_cant.Text = row.Cells["cantidad"].Value?.ToString() ?? "";
+            txt_prec.Text = row.Cells["precio"].Value?.ToString() ?? "";
+
+            txt_prov_prod.Text = row.Cells["proveedor"].Value?.ToString() ?? "";
+            txt_Protel.Text = row.Cells["proveedor_telefono"].Value?.ToString() ?? "";
+            txt_prov_dir.Text = row.Cells["proveedor_direccion"].Value?.ToString() ?? "";
+            txt_prov_prod.Text = row.Cells["proveedor_producto"].Value?.ToString() ?? "";
+
+            txt_feing.Text = FormatDate(row.Cells["fecha_ingreso"].Value);
+            txt_fechaegre.Text = FormatDate(row.Cells["fecha_egreso"].Value);
+
+            txt_est.Text = row.Cells["estado"].Value?.ToString() ?? "";
+            txt_resp.Text = row.Cells["responsable"].Value?.ToString() ?? "";
+
+            txt_prov_dir.Text = row.Cells["knu"].Value?.ToString() ?? "";
+
+            // foto_producto VARBINARY -> Image
+            object bin = row.Cells["foto_producto"].Value;
+            if (bin != null && bin != DBNull.Value)
+            {
+                fotoBytes = (byte[])bin;
+                pb_foto.Image = BytesToImageSafe(fotoBytes);
+                MessageBox.Show("hola");
+            }
+            else
+            {
+                fotoBytes = null;
+                pb_foto.Image = null;
+            }
+
+            SetMode(Mode.View); // al seleccionar, solo lectura
+            btn_actulizar.Enabled = true;
         }
 
     }

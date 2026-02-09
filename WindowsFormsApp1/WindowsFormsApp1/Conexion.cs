@@ -10,7 +10,8 @@ namespace WindowsFormsApp1
     public static class Db
     {
         public static string ConnectionString =
-@"Server=192.168.0.07\SQLEXPRESS;Database=ScanDentDB;User Id=dev_dani;Password=daniperrona123;TrustServerCertificate=True;";
+"Data Source=DESKTOP-G6EGNGU\\SQLEXPRESS;Initial Catalog=ScanDentDB;Integrated Security=True;TrustServerCertificate=True";
+
 
         public static SqlConnection GetConnection()
         {
